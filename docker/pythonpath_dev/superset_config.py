@@ -63,6 +63,7 @@ RESULTS_BACKEND = FileSystemCache("/app/superset_home/sqllab")
 SUPERSET_WEBSERVER_TIMEOUT = 60
 SQLLAB_TIMEOUT = 120
 
+
 CACHE_CONFIG = {
     "CACHE_TYPE": "RedisCache",
     "CACHE_DEFAULT_TIMEOUT": 300,
