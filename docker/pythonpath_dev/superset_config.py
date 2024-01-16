@@ -42,6 +42,20 @@ EXAMPLES_PORT = os.getenv("EXAMPLES_PORT")
 EXAMPLES_DB = os.getenv("EXAMPLES_DB")
 ENABLE_PROXY_FIX = True
 
+# Embed
+ENABLE_JAVASCRIPT_CONTROLS = True
+CONTENT_SECURITY_POLICY = {
+    "default-src": ["self"],
+}
+SESSION_COOKIE_SAMESITE = None
+PUBLIC_ROLE_LIKE_GAMMA = True
+CORS_OPTIONS = {
+    'supports_credentials': True,
+    'allow_headers': ['*'],
+    'resources':['*'],
+    'origins': ["http://localhost:8088", "http://localhost:8888"]
+}
+
 # The SQLAlchemy connection string.
 SQLALCHEMY_DATABASE_URI = (
     f"{DATABASE_DIALECT}://"
@@ -96,7 +110,7 @@ class CeleryConfig:
 
 CELERY_CONFIG = CeleryConfig
 
-FEATURE_FLAGS = {"ALERT_REPORTS": True}
+FEATURE_FLAGS = {"ALERT_REPORTS": True, "EMBEDDED_SUPERSET": True}
 ALERT_REPORTS_NOTIFICATION_DRY_RUN = True
 WEBDRIVER_BASEURL = "http://superset:8088/"
 # The base URL for the email report hyperlinks.
