@@ -42,6 +42,7 @@ EXAMPLES_PORT = os.getenv("EXAMPLES_PORT")
 EXAMPLES_DB = os.getenv("EXAMPLES_DB")
 ENABLE_PROXY_FIX = True
 APP_NAME = "LOMO Stats"
+APP_ICON = "/static/assets/images/lomo.png"
 
 # Embed
 ENABLE_JAVASCRIPT_CONTROLS = True
