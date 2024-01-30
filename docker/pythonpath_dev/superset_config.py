@@ -42,7 +42,7 @@ EXAMPLES_PORT = os.getenv("EXAMPLES_PORT")
 EXAMPLES_DB = os.getenv("EXAMPLES_DB")
 ENABLE_PROXY_FIX = True
 APP_NAME = "LOMO Stats"
-APP_ICON = "/static/assets/images/lomo.png"
+APP_ICON = "https://cdn.discordapp.com/attachments/1199662325335081020/1201932268088868905/lomo_stats.png?ex=65cb9da7&is=65b928a7&hm=6ae9b216143a6bfd57285e00deb56ce4df15ba1f530b5dcd7c9040fa0e0aee3b&"
 
 # Embed
 ENABLE_JAVASCRIPT_CONTROLS = True
