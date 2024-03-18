@@ -53,11 +53,15 @@ CONTENT_SECURITY_POLICY = {
 }
 SESSION_COOKIE_SAMESITE = None
 PUBLIC_ROLE_LIKE_GAMMA = True
+# TALISMAN_ENABLED = False
+
+HTTP_HEADERS = {'X-Frame-Options': 'ALLOWALL'}
+
 CORS_OPTIONS = {
     'supports_credentials': True,
     'allow_headers': ['*'],
     'resources':['*'],
-    'origins': ["http://localhost:8088", "http://localhost:8888"]
+    'origins': ["*"]
 }
 
 # The SQLAlchemy connection string.
