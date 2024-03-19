@@ -58,6 +58,7 @@ TALISMAN_ENABLED = False
 OVERRIDE_HTTP_HEADERS = {'X-Frame-Options': 'ALLOWALL'}
 HTTP_HEADERS = {'X-Frame-Options': 'ALLOWALL'}
 ENABLE_CORS = True
+PERMANENT_SESSION_LIFETIME = 60 * 60 * 1
 
 CORS_OPTIONS = {
     'supports_credentials': True,
