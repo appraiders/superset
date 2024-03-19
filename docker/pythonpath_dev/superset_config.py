@@ -55,6 +55,12 @@ SESSION_COOKIE_SAMESITE = None
 PUBLIC_ROLE_LIKE_GAMMA = True
 TALISMAN_ENABLED = False
 
+GUEST_ROLE_NAME = "Gamma"
+GUEST_TOKEN_JWT_SECRET = "kYu6ZHyQfj74mtb9LgBxW8"
+GUEST_TOKEN_JWT_ALGO = "HS256"
+GUEST_TOKEN_HEADER_NAME = "X-GuestToken"
+GUEST_TOKEN_JWT_EXP_SECONDS = 3600
+
 OVERRIDE_HTTP_HEADERS = {'X-Frame-Options': 'ALLOWALL'}
 HTTP_HEADERS = {'X-Frame-Options': 'ALLOWALL'}
 ENABLE_CORS = True
@@ -64,7 +70,7 @@ CORS_OPTIONS = {
     'supports_credentials': True,
     'allow_headers': ['*'],
     'resources':['*'],
-    'origins': ["*"]
+    'origins': ['http://localhost:8088', 'http://localhost:8888']
 }
 
 # The SQLAlchemy connection string.
