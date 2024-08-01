@@ -23,8 +23,12 @@
 import logging
 import os
 
+from datetime import timedelta
+
 from celery.schedules import crontab
 from flask_caching.backends.filesystemcache import FileSystemCache
+from flask import session
+from flask import Flask
 
 logger = logging.getLogger()
 
@@ -64,7 +68,18 @@ GUEST_TOKEN_JWT_EXP_SECONDS = 3600
 OVERRIDE_HTTP_HEADERS = {'X-Frame-Options': 'ALLOWALL'}
 HTTP_HEADERS = {'X-Frame-Options': 'ALLOWALL'}
 ENABLE_CORS = True
-PERMANENT_SESSION_LIFETIME = 60 * 60 * 1
+# PERMANENT_SESSION_LIFETIME = 60 * 60 * 1
+
+def make_session_permanent():
+    '''
+    Enable maxAge for the cookie 'session'
+    '''
+    session.permanent = True
+
+# Set up max age of session to 2 hours
+PERMANENT_SESSION_LIFETIME = timedelta(hours=2)
+def FLASK_APP_MUTATOR(app: Flask) -> None:
+    app.before_request_funcs.setdefault(None, []).append(make_session_permanent)
 
 CORS_OPTIONS = {
     'supports_credentials': True,
