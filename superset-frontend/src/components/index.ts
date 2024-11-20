@@ -24,7 +24,8 @@
  */
 export { default as Select } from './Select/Select';
 export { default as AsyncSelect } from './Select/AsyncSelect';
-
+export { default as Button } from './Button';
+export { default as Card } from './Card';
 /*
  * Components that don't conflict with the ones in src/components.
  * As Superset progresses to support full theming, this list should
@@ -32,7 +33,6 @@ export { default as AsyncSelect } from './Select/AsyncSelect';
  */
 export {
   AutoComplete,
-  Avatar,
   Col,
   Divider,
   Empty,
@@ -44,6 +44,7 @@ export {
   Steps,
   Tag,
   Tree,
+  TreeSelect,
   Typography,
   Upload,
 } from 'antd';
@@ -51,12 +52,11 @@ export {
 /*
  * Components that conflict with the ones in src/components.
  * We should try to avoid using Ant Design directly. The components
- * listed bellow may need review. Avoid incrementing this list by using
+ * listed below may need review. Avoid incrementing this list by using
  * or extending the components in src/components.
  */
 export {
-  Breadcrumb as AntdBreadcrumb,
-  Button as AntdButton,
+  Breadcrumb as AntdBreadcrumb, // TODO: Make this a real Component
   Card as AntdCard,
   Checkbox as AntdCheckbox,
   Collapse as AntdCollapse,
@@ -66,7 +66,6 @@ export {
   Modal as AntdModal,
   Select as AntdSelect,
   Slider as AntdSlider,
-  Switch as AntdSwitch,
   Tabs as AntdTabs,
   Tooltip as AntdTooltip,
 } from 'antd';

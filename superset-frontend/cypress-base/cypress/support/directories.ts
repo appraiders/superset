@@ -48,12 +48,12 @@ export const profile = {
   favoritesSpace: '#rc-tabs-0-panel-2',
 };
 export const securityAccess = {
-  rolesBubble: '.ant-badge-count',
+  rolesBubble: '.antd5-badge-count',
 };
 export const homePage = {
   homeSection: {
     sectionArea: '.ant-collapse-content-box',
-    sectionElement: '.ant-card-meta-title',
+    sectionElement: '.antd5-card-meta-title',
   },
   sections: {
     expandedSection: '.ant-collapse-item-active',
@@ -284,7 +284,7 @@ export const chartListView = {
   },
   card: {
     card: dataTestLocator('styled-card'),
-    cardCover: '[class="ant-card-cover"]',
+    cardCover: '[class="antd5-card-cover"]',
     cardImage: '[class="gradient-container"]',
     selectedStarIcon: "[aria-label='favorite-selected']",
     unselectedStarIcon: "[aria-label='favorite-unselected']",
@@ -322,7 +322,9 @@ export const nativeFilters = {
     footer: '.ant-modal-footer',
     saveButton: dataTestLocator('native-filter-modal-save-button'),
     cancelButton: dataTestLocator('native-filter-modal-cancel-button'),
-    yesCancelButton: '[type="button"]',
+    confirmCancelButton: dataTestLocator(
+      'native-filter-modal-confirm-cancel-button',
+    ),
     alertXUnsavedFilters: '.ant-alert-message',
     tabsList: {
       filterItemsContainer: dataTestLocator('filter-title-container'),
@@ -399,7 +401,7 @@ export const dashboardListView = {
   },
   card: {
     card: dataTestLocator('styled-card'),
-    cardCover: '[class="ant-card-cover"]',
+    cardCover: '[class="antd5-card-cover"]',
     cardImage: '[class="gradient-container"]',
     selectedStarIcon: "[aria-label='favorite-selected']",
     unselectedStarIcon: "[aria-label='favorite-unselected']",
@@ -657,7 +659,7 @@ export const dashboardView = {
   treeMapChartModal: {
     selectItem: '.Select_control',
     selectItemInput: '.Select__control input[type=text]',
-    applyButton: '.filter_box button:not(:disabled)',
+    applyButton: '.filter button:not(:disabled)',
     clearItemIcon: '.Select__clear-indicator',
   },
   sliceThreeDots: '[aria-label="More Options"]',

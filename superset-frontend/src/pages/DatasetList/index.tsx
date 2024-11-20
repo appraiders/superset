@@ -17,19 +17,12 @@
  * under the License.
  */
 import {
-  isFeatureEnabled,
-  FeatureFlag,
   getExtensionsRegistry,
   styled,
   SupersetClient,
   t,
 } from '@superset-ui/core';
-import React, {
-  FunctionComponent,
-  useState,
-  useMemo,
-  useCallback,
-} from 'react';
+import { FunctionComponent, useState, useMemo, useCallback, Key } from 'react';
 import { Link, useHistory } from 'react-router-dom';
 import rison from 'rison';
 import {
@@ -161,7 +154,11 @@ const DatasetList: FunctionComponent<DatasetListProps> = ({
   } = useListViewResource<Dataset>('dataset', t('dataset'), addDangerToast);
 
   const [datasetCurrentlyDeleting, setDatasetCurrentlyDeleting] = useState<
-    (Dataset & { chart_count: number; dashboard_count: number }) | null
+    | (Dataset & {
+        charts: any;
+        dashboards: any;
+      })
+    | null
   >(null);
 
   const [datasetCurrentlyEditing, setDatasetCurrentlyEditing] =
@@ -207,8 +204,7 @@ const DatasetList: FunctionComponent<DatasetListProps> = ({
   const canDelete = hasPerm('can_write');
   const canCreate = hasPerm('can_write');
   const canDuplicate = hasPerm('can_duplicate');
-  const canExport =
-    hasPerm('can_export') && isFeatureEnabled(FeatureFlag.VERSIONED_EXPORT);
+  const canExport = hasPerm('can_export');
 
   const initialSort = SORT_BY;
 
@@ -251,8 +247,8 @@ const DatasetList: FunctionComponent<DatasetListProps> = ({
       .then(({ json = {} }) => {
         setDatasetCurrentlyDeleting({
           ...dataset,
-          chart_count: json.charts.count,
-          dashboard_count: json.dashboards.count,
+          charts: json.charts,
+          dashboards: json.dashboards,
         });
       })
       .catch(
@@ -349,9 +345,7 @@ const DatasetList: FunctionComponent<DatasetListProps> = ({
                   />
                 )}
                 {titleLink}
-                {description && (
-                  <InfoTooltip tooltip={description} viewBox="0 -1 24 24" />
-                )}
+                {description && <InfoTooltip tooltip={description} />}
               </FlexRowContainer>
             );
           } catch {
@@ -488,7 +482,7 @@ const DatasetList: FunctionComponent<DatasetListProps> = ({
               )}
               {canDuplicate && original.kind === 'virtual' && (
                 <Tooltip
-                  id="duplicate-action-tooltop"
+                  id="duplicate-action-tooltip"
                   title={t('Duplicate')}
                   placement="bottom"
                 >
@@ -511,7 +505,7 @@ const DatasetList: FunctionComponent<DatasetListProps> = ({
         disableSortBy: true,
       },
       {
-        accessor: QueryObjectColumns.changed_by,
+        accessor: QueryObjectColumns.ChangedBy,
         hidden: true,
       },
     ],
@@ -525,14 +519,14 @@ const DatasetList: FunctionComponent<DatasetListProps> = ({
         key: 'search',
         id: 'table_name',
         input: 'search',
-        operator: FilterOperator.contains,
+        operator: FilterOperator.Contains,
       },
       {
         Header: t('Type'),
         key: 'sql',
         id: 'sql',
         input: 'select',
-        operator: FilterOperator.datasetIsNullOrEmpty,
+        operator: FilterOperator.DatasetIsNullOrEmpty,
         unfilteredLabel: 'All',
         selects: [
           { label: t('Virtual'), value: false },
@@ -544,7 +538,7 @@ const DatasetList: FunctionComponent<DatasetListProps> = ({
         key: 'database',
         id: 'database',
         input: 'select',
-        operator: FilterOperator.relationOneMany,
+        operator: FilterOperator.RelationOneMany,
         unfilteredLabel: 'All',
         fetchSelects: createFetchRelated(
           'dataset',
@@ -560,7 +554,7 @@ const DatasetList: FunctionComponent<DatasetListProps> = ({
         key: 'schema',
         id: 'schema',
         input: 'select',
-        operator: FilterOperator.equals,
+        operator: FilterOperator.Equals,
         unfilteredLabel: 'All',
         fetchSelects: createFetchDistinct(
           'dataset',
@@ -576,7 +570,7 @@ const DatasetList: FunctionComponent<DatasetListProps> = ({
         key: 'owner',
         id: 'owners',
         input: 'select',
-        operator: FilterOperator.relationManyMany,
+        operator: FilterOperator.RelationManyMany,
         unfilteredLabel: 'All',
         fetchSelects: createFetchRelated(
           'dataset',
@@ -597,7 +591,7 @@ const DatasetList: FunctionComponent<DatasetListProps> = ({
         id: 'id',
         urlDisplay: 'certified',
         input: 'select',
-        operator: FilterOperator.datasetIsCertified,
+        operator: FilterOperator.DatasetIsCertified,
         unfilteredLabel: t('Any'),
         selects: [
           { label: t('Yes'), value: true },
@@ -609,7 +603,7 @@ const DatasetList: FunctionComponent<DatasetListProps> = ({
         key: 'changed_by',
         id: 'changed_by',
         input: 'select',
-        operator: FilterOperator.relationOneMany,
+        operator: FilterOperator.RelationOneMany,
         unfilteredLabel: t('All'),
         fetchSelects: createFetchRelated(
           'dataset',
@@ -656,21 +650,19 @@ const DatasetList: FunctionComponent<DatasetListProps> = ({
       buttonStyle: 'primary',
     });
 
-    if (isFeatureEnabled(FeatureFlag.VERSIONED_EXPORT)) {
-      buttonArr.push({
-        name: (
-          <Tooltip
-            id="import-tooltip"
-            title={t('Import datasets')}
-            placement="bottomRight"
-          >
-            <Icons.Import data-test="import-button" />
-          </Tooltip>
-        ),
-        buttonStyle: 'link',
-        onClick: openDatasetImportModal,
-      });
-    }
+    buttonArr.push({
+      name: (
+        <Tooltip
+          id="import-tooltip"
+          title={t('Import datasets')}
+          placement="bottomRight"
+        >
+          <Icons.Import data-test="import-button" />
+        </Tooltip>
+      ),
+      buttonStyle: 'link',
+      onClick: openDatasetImportModal,
+    });
   }
 
   menuData.buttons = buttonArr;
@@ -754,13 +746,80 @@ const DatasetList: FunctionComponent<DatasetListProps> = ({
           description={
             <>
               <p>
+                {t('The dataset')}
+                <b> {datasetCurrentlyDeleting.table_name} </b>
                 {t(
-                  'The dataset %s is linked to %s charts that appear on %s dashboards. Are you sure you want to continue? Deleting the dataset will break those objects.',
-                  datasetCurrentlyDeleting.table_name,
-                  datasetCurrentlyDeleting.chart_count,
-                  datasetCurrentlyDeleting.dashboard_count,
+                  'is linked to %s charts that appear on %s dashboards. Are you sure you want to continue? Deleting the dataset will break those objects.',
+                  datasetCurrentlyDeleting.charts.count,
+                  datasetCurrentlyDeleting.dashboards.count,
                 )}
               </p>
+              {datasetCurrentlyDeleting.dashboards.count >= 1 && (
+                <>
+                  <h4>{t('Affected Dashboards')}</h4>
+                  <ul>
+                    {datasetCurrentlyDeleting.dashboards.result
+                      .slice(0, 10)
+                      .map(
+                        (
+                          result: { id: Key | null | undefined; title: string },
+                          index: number,
+                        ) => (
+                          <li key={result.id}>
+                            <a
+                              href={`/superset/dashboard/${result.id}`}
+                              target="_atRiskItem"
+                            >
+                              {result.title}
+                            </a>
+                          </li>
+                        ),
+                      )}
+                    {datasetCurrentlyDeleting.dashboards.result.length > 10 && (
+                      <li>
+                        {t(
+                          '... and %s others',
+                          datasetCurrentlyDeleting.dashboards.result.length -
+                            10,
+                        )}
+                      </li>
+                    )}
+                  </ul>
+                </>
+              )}
+              {datasetCurrentlyDeleting.charts.count >= 1 && (
+                <>
+                  <h4>{t('Affected Charts')}</h4>
+                  <ul>
+                    {datasetCurrentlyDeleting.charts.result.slice(0, 10).map(
+                      (
+                        result: {
+                          id: Key | null | undefined;
+                          slice_name: string;
+                        },
+                        index: number,
+                      ) => (
+                        <li key={result.id}>
+                          <a
+                            href={`/explore/?slice_id=${result.id}`}
+                            target="_atRiskItem"
+                          >
+                            {result.slice_name}
+                          </a>
+                        </li>
+                      ),
+                    )}
+                    {datasetCurrentlyDeleting.charts.result.length > 10 && (
+                      <li>
+                        {t(
+                          '... and %s others',
+                          datasetCurrentlyDeleting.charts.result.length - 10,
+                        )}
+                      </li>
+                    )}
+                  </ul>
+                </>
+              )}
               {DatasetDeleteRelatedExtension && (
                 <DatasetDeleteRelatedExtension
                   dataset={datasetCurrentlyDeleting}

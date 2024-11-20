@@ -20,6 +20,8 @@ import '@cypress/code-coverage/support';
 import '@applitools/eyes-cypress/commands';
 import failOnConsoleError from 'cypress-fail-on-console-error';
 
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
 require('cy-verify-downloads').addCustomCommand();
 
 // fail on console error, allow config to override individual tests
@@ -34,7 +36,7 @@ const { getConfig, setConfig } = failOnConsoleError({
   ],
 });
 
-// Set infividual tests to allow certain console erros to NOT fail, e.g
+// Set individual tests to allow certain console errors to NOT fail, e.g
 // cy.allowConsoleErrors(['foo', /^some bar-regex.*/]);
 // This will be reset between tests.
 Cypress.Commands.addAll({

@@ -16,7 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import React from 'react';
+import { PureComponent } from 'react';
 import PropTypes from 'prop-types';
 import { isFeatureEnabled, t, FeatureFlag } from '@superset-ui/core';
 
@@ -41,6 +41,7 @@ import { areObjectsEqual } from '../../reduxUtils';
 import getLocationHash from '../util/getLocationHash';
 import isDashboardEmpty from '../util/isDashboardEmpty';
 import { getAffectedOwnDataCharts } from '../util/charts/getOwnDataCharts';
+import { getRelatedCharts } from '../util/getRelatedCharts';
 
 const propTypes = {
   actions: PropTypes.shape({
@@ -59,18 +60,17 @@ const propTypes = {
   ownDataCharts: PropTypes.object.isRequired,
   layout: PropTypes.object.isRequired,
   impressionId: PropTypes.string.isRequired,
-  initMessages: PropTypes.array,
   timeout: PropTypes.number,
   userId: PropTypes.string,
+  children: PropTypes.node,
 };
 
 const defaultProps = {
-  initMessages: [],
   timeout: 60,
   userId: '',
 };
 
-class Dashboard extends React.PureComponent {
+class Dashboard extends PureComponent {
   static contextType = PluginContext;
 
   static onBeforeUnload(hasChanged) {
@@ -162,7 +162,7 @@ class Dashboard extends React.PureComponent {
     const { appliedFilters, appliedOwnDataCharts } = this;
     const { activeFilters, ownDataCharts, chartConfiguration } = this.props;
     if (
-      isFeatureEnabled(FeatureFlag.DASHBOARD_CROSS_FILTERS) &&
+      isFeatureEnabled(FeatureFlag.DashboardCrossFilters) &&
       !chartConfiguration
     ) {
       // For a first loading we need to wait for cross filters charts data loaded to get all active filters
@@ -213,9 +213,10 @@ class Dashboard extends React.PureComponent {
 
   applyFilters() {
     const { appliedFilters } = this;
-    const { activeFilters, ownDataCharts } = this.props;
+    const { activeFilters, ownDataCharts, slices } = this.props;
 
     // refresh charts if a filter was removed, added, or changed
+
     const currFilterKeys = Object.keys(activeFilters);
     const appliedFilterKeys = Object.keys(appliedFilters);
 
@@ -224,16 +225,21 @@ class Dashboard extends React.PureComponent {
       ownDataCharts,
       this.appliedOwnDataCharts,
     );
+
     [...allKeys].forEach(filterKey => {
       if (
         !currFilterKeys.includes(filterKey) &&
         appliedFilterKeys.includes(filterKey)
       ) {
         // filterKey is removed?
-        affectedChartIds.push(...appliedFilters[filterKey].scope);
+        affectedChartIds.push(
+          ...getRelatedCharts(filterKey, appliedFilters[filterKey], slices),
+        );
       } else if (!appliedFilterKeys.includes(filterKey)) {
         // filterKey is newly added?
-        affectedChartIds.push(...activeFilters[filterKey].scope);
+        affectedChartIds.push(
+          ...getRelatedCharts(filterKey, activeFilters[filterKey], slices),
+        );
       } else {
         // if filterKey changes value,
         // update charts in its scope
@@ -246,7 +252,9 @@ class Dashboard extends React.PureComponent {
             },
           )
         ) {
-          affectedChartIds.push(...activeFilters[filterKey].scope);
+          affectedChartIds.push(
+            ...getRelatedCharts(filterKey, activeFilters[filterKey], slices),
+          );
         }
 
         // if filterKey changes scope,

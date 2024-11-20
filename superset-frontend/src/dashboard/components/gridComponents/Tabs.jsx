@@ -16,14 +16,16 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import React from 'react';
+import { PureComponent } from 'react';
 import PropTypes from 'prop-types';
 import { styled, t } from '@superset-ui/core';
 import { connect } from 'react-redux';
 import { LineEditableTabs } from 'src/components/Tabs';
+import Icons from 'src/components/Icons';
 import { LOG_ACTIONS_SELECT_DASHBOARD_TAB } from 'src/logger/LogUtils';
 import { AntdModal } from 'src/components';
-import DragDroppable from '../dnd/DragDroppable';
+import { DROP_LEFT, DROP_RIGHT } from 'src/dashboard/util/getDropPosition';
+import { Draggable } from '../dnd/DragDroppable';
 import DragHandle from '../dnd/DragHandle';
 import DashboardComponent from '../../containers/DashboardComponent';
 import DeleteComponentButton from '../DeleteComponentButton';
@@ -32,7 +34,7 @@ import findTabIndexByComponentId from '../../util/findTabIndexByComponentId';
 import getDirectPathToTabIndex from '../../util/getDirectPathToTabIndex';
 import getLeafComponentIdFromPath from '../../util/getLeafComponentIdFromPath';
 import { componentShape } from '../../util/propShapes';
-import { NEW_TAB_ID, DASHBOARD_ROOT_ID } from '../../util/constants';
+import { NEW_TAB_ID } from '../../util/constants';
 import { RENDER_TAB, RENDER_TAB_CONTENT } from './Tab';
 import { TABS_TYPE, TAB_TYPE } from '../../util/componentTypes';
 
@@ -108,7 +110,30 @@ const StyledTabsContainer = styled.div`
   }
 `;
 
-export class Tabs extends React.PureComponent {
+const StyledCancelXIcon = styled(Icons.CancelX)`
+  color: ${({ theme }) => theme.colors.grayscale.base};
+`;
+
+const DropIndicator = styled.div`
+  border: 2px solid ${({ theme }) => theme.colors.primary.base};
+  width: 5px;
+  height: 100%;
+  position: absolute;
+  top: 0;
+  ${({ pos }) => (pos === 'left' ? 'left: -4px' : 'right: -4px')};
+  border-radius: 2px;
+`;
+
+const CloseIconWithDropIndicator = props => (
+  <>
+    <StyledCancelXIcon />
+    {props.showDropIndicators.right && (
+      <DropIndicator className="drop-indicator-right" pos="right" />
+    )}
+  </>
+);
+
+export class Tabs extends PureComponent {
   constructor(props) {
     super(props);
     const { tabIndex, activeKey } = this.getTabInfo(props);
@@ -122,6 +147,8 @@ export class Tabs extends React.PureComponent {
     this.handleDeleteTab = this.handleDeleteTab.bind(this);
     this.handleDropOnTab = this.handleDropOnTab.bind(this);
     this.handleDrop = this.handleDrop.bind(this);
+    this.handleGetDropPosition = this.handleGetDropPosition.bind(this);
+    this.handleDragggingTab = this.handleDragggingTab.bind(this);
   }
 
   componentDidMount() {
@@ -215,7 +242,7 @@ export class Tabs extends React.PureComponent {
       content: (
         <span>
           {t(
-            'Deleting a tab will remove all content within it. You may still ' +
+            'Deleting a tab will remove all content within it and will deactivate any related alerts or reports. You may still ' +
               'reverse this action with the',
           )}{' '}
           <b>{t('undo')}</b>{' '}
@@ -286,6 +313,19 @@ export class Tabs extends React.PureComponent {
     }
   }
 
+  handleGetDropPosition(dragObject) {
+    const { dropIndicator, isDraggingOver, index } = dragObject;
+
+    if (isDraggingOver) {
+      this.setState(() => ({
+        dropPosition: dropIndicator,
+        dragOverTabIndex: index,
+      }));
+    } else {
+      this.setState(() => ({ dropPosition: null }));
+    }
+  }
+
   handleDropOnTab(dropResult) {
     const { component } = this.props;
 
@@ -311,6 +351,14 @@ export class Tabs extends React.PureComponent {
     }
   }
 
+  handleDragggingTab(tabId) {
+    if (tabId) {
+      this.setState(() => ({ draggingTabId: tabId }));
+    } else {
+      this.setState(() => ({ draggingTabId: null }));
+    }
+  }
+
   render() {
     const {
       depth,
@@ -330,7 +378,20 @@ export class Tabs extends React.PureComponent {
     } = this.props;
 
     const { children: tabIds } = tabsComponent;
-    const { tabIndex: selectedTabIndex, activeKey } = this.state;
+    const {
+      tabIndex: selectedTabIndex,
+      activeKey,
+      dropPosition,
+      dragOverTabIndex,
+    } = this.state;
+
+    const showDropIndicators = currentDropTabIndex =>
+      currentDropTabIndex === dragOverTabIndex && {
+        left: editMode && dropPosition === DROP_LEFT,
+        right: editMode && dropPosition === DROP_RIGHT,
+      };
+
+    const removeDraggedTab = tabID => this.state.draggingTabId === tabID;
 
     let tabsToHighlight;
     const highlightedFilterId =
@@ -339,7 +400,7 @@ export class Tabs extends React.PureComponent {
       tabsToHighlight = nativeFilters.filters[highlightedFilterId]?.tabsInScope;
     }
     return (
-      <DragDroppable
+      <Draggable
         component={tabsComponent}
         parentComponent={parentComponent}
         orientation="row"
@@ -348,10 +409,7 @@ export class Tabs extends React.PureComponent {
         onDrop={this.handleDrop}
         editMode={editMode}
       >
-        {({
-          dropIndicatorProps: tabsDropIndicatorProps,
-          dragSourceRef: tabsDragSourceRef,
-        }) => (
+        {({ dragSourceRef: tabsDragSourceRef }) => (
           <StyledTabsContainer
             className="dashboard-component dashboard-component-tabs"
             data-test="dashboard-component-tabs"
@@ -377,21 +435,47 @@ export class Tabs extends React.PureComponent {
                 <LineEditableTabs.TabPane
                   key={tabId}
                   tab={
-                    <DashboardComponent
-                      id={tabId}
-                      parentId={tabsComponent.id}
-                      depth={depth}
-                      index={tabIndex}
-                      renderType={RENDER_TAB}
-                      availableColumnCount={availableColumnCount}
-                      columnWidth={columnWidth}
-                      onDropOnTab={this.handleDropOnTab}
-                      onHoverTab={() => this.handleClickTab(tabIndex)}
-                      isFocused={activeKey === tabId}
-                      isHighlighted={
-                        activeKey !== tabId && tabsToHighlight?.includes(tabId)
-                      }
-                    />
+                    removeDraggedTab(tabId) ? (
+                      <></>
+                    ) : (
+                      <>
+                        {showDropIndicators(tabIndex).left && (
+                          <DropIndicator
+                            className="drop-indicator-left"
+                            pos="left"
+                          />
+                        )}
+                        <DashboardComponent
+                          id={tabId}
+                          parentId={tabsComponent.id}
+                          depth={depth}
+                          index={tabIndex}
+                          renderType={RENDER_TAB}
+                          availableColumnCount={availableColumnCount}
+                          columnWidth={columnWidth}
+                          onDropOnTab={this.handleDropOnTab}
+                          onDropPositionChange={this.handleGetDropPosition}
+                          onDragTab={this.handleDragggingTab}
+                          onHoverTab={() => this.handleClickTab(tabIndex)}
+                          isFocused={activeKey === tabId}
+                          isHighlighted={
+                            activeKey !== tabId &&
+                            tabsToHighlight?.includes(tabId)
+                          }
+                        />
+                      </>
+                    )
+                  }
+                  closeIcon={
+                    removeDraggedTab(tabId) ? (
+                      <></>
+                    ) : (
+                      <CloseIconWithDropIndicator
+                        role="button"
+                        tabIndex={tabIndex}
+                        showDropIndicators={showDropIndicators(tabIndex)}
+                      />
+                    )
                   }
                 >
                   {renderTabContent && (
@@ -415,15 +499,9 @@ export class Tabs extends React.PureComponent {
                 </LineEditableTabs.TabPane>
               ))}
             </LineEditableTabs>
-
-            {/* don't indicate that a drop on root is allowed when tabs already exist */}
-            {tabsDropIndicatorProps &&
-              parentComponent.id !== DASHBOARD_ROOT_ID && (
-                <div {...tabsDropIndicatorProps} />
-              )}
           </StyledTabsContainer>
         )}
-      </DragDroppable>
+      </Draggable>
     );
   }
 }
@@ -438,4 +516,5 @@ function mapStateToProps(state) {
     directPathToChild: state.dashboardState.directPathToChild,
   };
 }
+
 export default connect(mapStateToProps)(Tabs);

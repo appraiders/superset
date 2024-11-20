@@ -25,7 +25,7 @@ export const WORLD_HEALTH_CHARTS = [
   { name: 'Most Populated Countries', viz: 'table' },
   { name: "World's Population", viz: 'big_number' },
   { name: 'Growth Rate', viz: 'line' },
-  { name: 'Rural Breakdown', viz: 'sunburst' },
+  { name: 'Rural Breakdown', viz: 'sunburst_v2' },
   { name: "World's Pop Growth", viz: 'area' },
   { name: 'Life Expectancy VS Rural %', viz: 'bubble' },
   { name: 'Treemap', viz: 'treemap_v2' },
@@ -38,17 +38,17 @@ export const SUPPORTED_TIER1_CHARTS = [
   { name: 'Pie Chart', viz: 'pie' },
   { name: 'Table', viz: 'table' },
   { name: 'Pivot Table', viz: 'pivot_table_v2' },
-  { name: 'Time-Series Line Chart', viz: 'echarts_timeseries_line' },
-  { name: 'Time-Series Area Chart', viz: 'echarts_area' },
-  { name: 'Time-Series Scatter Chart', viz: 'echarts_timeseries_scatter' },
-  { name: 'Time-Series Bar Chart V2', viz: 'echarts_timeseries_bar' },
+  { name: 'Line Chart', viz: 'echarts_timeseries_line' },
+  { name: 'Area Chart', viz: 'echarts_area' },
+  { name: 'Scatter Chart', viz: 'echarts_timeseries_scatter' },
+  { name: 'Bar Chart V2', viz: 'echarts_timeseries_bar' },
 ] as ChartSpec[];
 
 export const SUPPORTED_TIER2_CHARTS = [
   { name: 'Box Plot Chart', viz: 'box_plot' },
-  { name: 'Time-Series Generic Chart', viz: 'echarts_timeseries' },
-  { name: 'Time-Series Smooth Line Chart', viz: 'echarts_timeseries_smooth' },
-  { name: 'Time-Series Step Line Chart', viz: 'echarts_timeseries_step' },
+  { name: 'Generic Chart', viz: 'echarts_timeseries' },
+  { name: 'Smooth Line Chart', viz: 'echarts_timeseries_smooth' },
+  { name: 'Step Line Chart', viz: 'echarts_timeseries_step' },
   { name: 'Funnel Chart', viz: 'funnel' },
   { name: 'Gauge Chart', viz: 'gauge_chart' },
   { name: 'Radar Chart', viz: 'radar' },
@@ -204,9 +204,9 @@ export function expandFilterOnLeftPanel() {
 }
 
 /** ************************************************************************
- * Collapes Native Filter from the left panel on dashboard
+ * Collapses Native Filter from the left panel on dashboard
  * @returns {None}
- * @summary helper for collape native filter
+ * @summary helper for collapse native filter
  ************************************************************************* */
 export function collapseFilterOnLeftPanel() {
   cy.get(nativeFilters.filterFromDashboardView.collapse)
@@ -239,15 +239,11 @@ export function enterNativeFilterEditModal(waitForDataset = true) {
  * @summary helper for adding new filter
  ************************************************************************* */
 export function clickOnAddFilterInModal() {
+  cy.get(nativeFilters.addFilterButton.button).first().click();
   return cy
-    .get(nativeFilters.addFilterButton.button)
-    .first()
-    .click()
-    .then(() => {
-      cy.get(nativeFilters.addFilterButton.dropdownItem)
-        .contains('Filter')
-        .click({ force: true });
-    });
+    .get(nativeFilters.addFilterButton.dropdownItem)
+    .contains('Filter')
+    .click({ force: true });
 }
 
 /** ************************************************************************
@@ -272,14 +268,22 @@ export function fillNativeFilterForm(
   cy.get(nativeFilters.modal.container)
     .find(nativeFilters.filtersPanel.filterName)
     .last()
-    .click({ scrollBehavior: false })
-    .clear({ force: true })
+    .click({ scrollBehavior: false });
+  cy.get(nativeFilters.modal.container)
+    .find(nativeFilters.filtersPanel.filterName)
+    .last()
+    .clear({ force: true });
+  cy.get(nativeFilters.modal.container)
+    .find(nativeFilters.filtersPanel.filterName)
+    .last()
     .type(name, { scrollBehavior: false, force: true });
   if (dataset) {
     cy.get(nativeFilters.modal.container)
       .find(nativeFilters.filtersPanel.datasetName)
       .last()
-      .click({ force: true, scrollBehavior: false })
+      .click({ force: true, scrollBehavior: false });
+    cy.get(nativeFilters.modal.container)
+      .find(nativeFilters.filtersPanel.datasetName)
       .type(`${dataset}`, { scrollBehavior: false });
     cy.get(nativeFilters.silentLoading).should('not.exist');
     cy.get(`[label="${dataset}"]`).click({ multiple: true, force: true });
@@ -339,9 +343,9 @@ export function addParentFilterWithValue(index: number, value: string) {
   return cy
     .get(nativeFilters.filterConfigurationSections.displayedSection)
     .within(() => {
+      cy.get('input[aria-label="Limit type"]').eq(index).click({ force: true });
       cy.get('input[aria-label="Limit type"]')
         .eq(index)
-        .click({ force: true })
         .type(`${value}{enter}`, { delay: 30, force: true });
     });
 }
@@ -374,7 +378,7 @@ export function cancelNativeFilterSettings() {
     .should('be.visible')
     .should('have.text', 'There are unsaved changes.');
   cy.get(nativeFilters.modal.footer)
-    .find(nativeFilters.modal.yesCancelButton)
+    .find(nativeFilters.modal.confirmCancelButton)
     .contains('cancel')
     .click({ force: true });
   cy.get(nativeFilters.modal.container).should('not.exist');
@@ -425,7 +429,7 @@ export function undoDeleteNativeFilter() {
 
 /** ************************************************************************
  * Check Native Filter tooltip content
- * @param index: tooltip indext to check
+ * @param index: tooltip index to check
  * @param value: tooltip value to check
  * @return {null}
  * @summary helper for checking native filter tooltip content by index
@@ -471,10 +475,10 @@ export function applyAdvancedTimeRangeFilterOnDashboard(
 }
 
 /** ************************************************************************
- * Input default valule in Native filter in filter settings
+ * Input default value in Native filter in filter settings
  * @param defaultValue: default value for native filter
  * @return {null}
- * @summary helper for input default valule in Native filter in filter settings
+ * @summary helper for input default value in Native filter in filter settings
  ************************************************************************* */
 export function inputNativeFilterDefaultValue(
   defaultValue: string,

@@ -18,7 +18,6 @@
  */
 import { buildQueryContext } from '@superset-ui/core';
 import * as queryModule from '../../src/query/normalizeTimeColumn';
-import * as getXAxisModule from '../../src/query/getXAxis';
 
 describe('buildQueryContext', () => {
   it('should build datasource for table sources and apply defaults', () => {
@@ -125,10 +124,7 @@ describe('buildQueryContext', () => {
       },
     ]);
   });
-  it('should call normalizeTimeColumn if GENERIC_CHART_AXES is enabled and has x_axis', () => {
-    Object.defineProperty(getXAxisModule, 'hasGenericChartAxes', {
-      value: true,
-    });
+  it('should call normalizeTimeColumn if has x_axis', () => {
     const spyNormalizeTimeColumn = jest.spyOn(
       queryModule,
       'normalizeTimeColumn',
@@ -142,26 +138,7 @@ describe('buildQueryContext', () => {
       },
       () => [{}],
     );
-    expect(spyNormalizeTimeColumn).toBeCalled();
-    spyNormalizeTimeColumn.mockRestore();
-  });
-  it("shouldn't call normalizeTimeColumn if GENERIC_CHART_AXES is disabled", () => {
-    Object.defineProperty(getXAxisModule, 'hasGenericChartAxes', {
-      value: false,
-    });
-    const spyNormalizeTimeColumn = jest.spyOn(
-      queryModule,
-      'normalizeTimeColumn',
-    );
-
-    buildQueryContext(
-      {
-        datasource: '5__table',
-        viz_type: 'table',
-      },
-      () => [{}],
-    );
-    expect(spyNormalizeTimeColumn).not.toBeCalled();
+    expect(spyNormalizeTimeColumn).toHaveBeenCalled();
     spyNormalizeTimeColumn.mockRestore();
   });
 });
